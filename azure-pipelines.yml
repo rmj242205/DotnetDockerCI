@@ -3,33 +3,23 @@
 # Add steps that build, run tests, deploy, and more:
 # https://aka.ms/yaml
 
-# azure-pipelines.yml
 trigger:
-  branches:
-    include:
-      - main
+- main
 
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: ubuntu-latest
 
 variables:
-  dockerHubUsername: '<your-dockerhub-username>'
-  dockerImageName: 'dotnetdockerci'
+  buildConfiguration: 'Release'
 
 steps:
+# ✅ Install .NET 9.0
 - task: UseDotNet@2
   inputs:
     packageType: 'sdk'
-    version: '7.0.x' # Or 9.0.x if your app uses .NET 9
-    installationPath: $(Agent.ToolsDirectory)/dotnet
+    version: '9.0.x'
+    includePreviewVersions: true
 
-- script: dotnet build --configuration Release
+# ✅ Restore and Build
+- script: dotnet build --configuration $(buildConfiguration)
   displayName: 'Build Project'
-
-- script: |
-    docker build -t $(dockerHubUsername)/$(dockerImageName):latest .
-    echo "$(DOCKER_PASSWORD)" | docker login -u $(dockerHubUsername) --password-stdin
-    docker push $(dockerHubUsername)/$(dockerImageName):latest
-  displayName: 'Build and Push Docker Image'
-  env:
-    DOCKER_PASSWORD: $(dockerHubPassword) # Set this as a secret variable
