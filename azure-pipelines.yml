@@ -1,0 +1,35 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+# azure-pipelines.yml
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  dockerHubUsername: '<your-dockerhub-username>'
+  dockerImageName: 'dotnetdockerci'
+
+steps:
+- task: UseDotNet@2
+  inputs:
+    packageType: 'sdk'
+    version: '7.0.x' # Or 9.0.x if your app uses .NET 9
+    installationPath: $(Agent.ToolsDirectory)/dotnet
+
+- script: dotnet build --configuration Release
+  displayName: 'Build Project'
+
+- script: |
+    docker build -t $(dockerHubUsername)/$(dockerImageName):latest .
+    echo "$(DOCKER_PASSWORD)" | docker login -u $(dockerHubUsername) --password-stdin
+    docker push $(dockerHubUsername)/$(dockerImageName):latest
+  displayName: 'Build and Push Docker Image'
+  env:
+    DOCKER_PASSWORD: $(dockerHubPassword) # Set this as a secret variable
